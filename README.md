@@ -1,4 +1,4 @@
-# ronis
+# Ronis
 
 This is a simple Redis-like in-memory key-value store built using Node.js and TCP sockets.
 
