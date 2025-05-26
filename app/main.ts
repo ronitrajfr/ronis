@@ -1,11 +1,22 @@
 import * as net from "net";
 
+// You can use print statements as follows for debugging, they'll be visible when running tests.
 console.log("Logs from your program will appear here!");
 const store = new Map<string, string>();
 const expiryStore = new Map<string, number>();
 
+const args = process.argv;
+const dirIndex = args.indexOf("--dir");
+const dbfilenameIndex = args.indexOf("--dbfilename");
+
+const dir = dirIndex !== -1 ? args[dirIndex + 1] : "";
+const dbfilename = dbfilenameIndex !== -1 ? args[dbfilenameIndex + 1] : "";
+
+// Uncomment this block to pass the first stage
 const server: net.Server = net.createServer((connection: net.Socket) => {
+  // Handle connection
   //connection.write("+PONG\r\n");
+
   connection.on("data", (data) => {
     const request = data.toString();
     const parts = request.split("\r\n");
@@ -38,6 +49,7 @@ const server: net.Server = net.createServer((connection: net.Socket) => {
       const getData = store.get(result[1]);
       if (!getData) {
         connection.write("$-1\r\n");
+        return;
       }
       const key = result[1];
       const expiry = expiryStore.get(key!);
@@ -48,6 +60,15 @@ const server: net.Server = net.createServer((connection: net.Socket) => {
         return;
       }
       connection.write(`$${getData!.length}\r\n${getData}\r\n`);
+    } else if (result[0].toUpperCase() === "CONFIG") {
+      console.log(args);
+      if (result[2].toLowerCase() === "dir") {
+        connection.write(`*2\r\n$3\r\ndir\r\n$${dir.length}\r\n${dir}\r\n`);
+      } else if (result[2].toLowerCase() === "dbfilename") {
+        connection.write(
+          `*2\r\n$10\r\ndbfilename\r\n$${dbfilename.length}\r\n${dbfilename}\r\n`
+        );
+      }
     }
   });
 });
